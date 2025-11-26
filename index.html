@@ -3,214 +3,794 @@
 <head>
   <meta charset="utf-8" />
   <title>Radiant Deploy v2 – FIXED</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#020518" />
-
-  <!-- Manifest PWA -->
   <link rel="manifest" href="/manifest.webmanifest" />
 
-  <!-- Estilos básicos Radiant -->
   <style>
     :root {
-      --bg-main: radial-gradient(circle at top, #0b1c3a 0%, #020518 40%, #000000 100%);
-      --card-bg: rgba(6, 14, 40, 0.92);
+      --bg-main: radial-gradient(circle at top, #07162b 0%, #020518 55%, #000000 100%);
+      --card-bg: rgba(6, 20, 40, 0.95);
+      --card-bg-soft: rgba(8, 26, 53, 0.9);
       --accent: #3bd5ff;
-      --accent-soft: rgba(59, 213, 255, 0.15);
+      --accent-soft: rgba(59, 213, 255, 0.25);
+      --accent-strong: #4df0ff;
       --text-main: #f5f7ff;
-      --text-dim: #a4b0d0;
-      --danger: #ff4f7b;
-      --shadow-soft: 0 20px 45px rgba(0, 0, 0, 0.6);
-      --radius-xl: 24px;
+      --text-dim: #9aa7c2;
+      --danger: #ff4f6b;
+      --ok: #4ade80;
+      --warning: #facc15;
+      --border-soft: rgba(125, 139, 170, 0.4);
+      --shadow-soft: 0 20px 45px rgba(0, 0, 0, 0.65);
+      --radius-lg: 22px;
+      --radius-md: 16px;
+      --radius-pill: 999px;
+      --blur-soft: 18px;
     }
 
     * {
       box-sizing: border-box;
-      margin: 0;
-      padding: 0;
+      -webkit-tap-highlight-color: transparent;
     }
 
     body {
+      margin: 0;
       min-height: 100vh;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      color: var(--text-main);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+        "Roboto", "Segoe UI", sans-serif;
       background: var(--bg-main);
+      color: var(--text-main);
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      justify-content: flex-start;
+    }
+
+    .app-shell {
+      max-width: 450px;
+      margin: 0 auto;
+      min-height: 100vh;
+      padding: 16px 16px 84px;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    .glow-orbit {
+      position: fixed;
+      inset: -30%;
+      pointer-events: none;
+      opacity: 0.7;
+      background:
+        radial-gradient(circle at 10% -10%, rgba(59, 213, 255, 0.18) 0, transparent 55%),
+        radial-gradient(circle at 90% 0%, rgba(76, 115, 255, 0.18) 0, transparent 50%);
+      z-index: -1;
+    }
+
+    header.app-header {
+      padding: 14px 16px 14px;
+      border-radius: var(--radius-lg);
+      background: linear-gradient(135deg, rgba(10, 26, 53, 0.98), rgba(3, 9, 20, 0.98));
+      box-shadow: var(--shadow-soft);
+      border: 1px solid rgba(104, 131, 186, 0.4);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .title-row {
       display: flex;
       align-items: center;
-      justify-content: center;
-      padding: 24px 16px;
+      justify-content: space-between;
+      gap: 10px;
     }
 
-    .shell {
-      width: 100%;
-      max-width: 520px;
-      background: var(--card-bg);
-      border-radius: var(--radius-xl);
-      box-shadow: var(--shadow-soft);
-      border: 1px solid rgba(112, 128, 255, 0.25);
-      padding: 20px 18px 18px;
-      position: relative;
-      overflow: hidden;
+    .title-main {
+      font-size: 1.1rem;
+      font-weight: 650;
+      letter-spacing: 0.02em;
     }
 
-    .pulse {
-      position: absolute;
-      inset: -120px;
-      background:
-        radial-gradient(circle at 10% 0%, rgba(59, 213, 255, 0.13) 0, transparent 50%),
-        radial-gradient(circle at 90% 20%, rgba(163, 99, 255, 0.18) 0, transparent 52%),
-        radial-gradient(circle at 50% 120%, rgba(0, 255, 180, 0.10) 0, transparent 55%);
-      opacity: 0.85;
-      pointer-events: none;
+    .badge-beta {
+      padding: 4px 10px;
+      border-radius: var(--radius-pill);
+      background: rgba(59, 213, 255, 0.12);
+      border: 1px solid rgba(59, 213, 255, 0.5);
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--accent-strong);
+      white-space: nowrap;
     }
 
-    .content {
-      position: relative;
-      z-index: 2;
+    .subtitle {
+      font-size: 0.78rem;
+      color: var(--text-dim);
     }
 
-    .badge {
+    .crumbs {
+      font-size: 0.7rem;
+      color: var(--text-dim);
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .crumbs span {
+      opacity: 0.9;
+    }
+
+    .crumb-dot {
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: rgba(115, 130, 171, 0.8);
+    }
+
+    /* Status bar */
+
+    .status-bar {
+      margin-top: 14px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .chip {
       display: inline-flex;
       align-items: center;
       gap: 6px;
       padding: 4px 10px;
-      border-radius: 999px;
-      background: rgba(4, 255, 171, 0.08);
-      border: 1px solid rgba(4, 255, 171, 0.25);
-      font-size: 11px;
-      letter-spacing: 0.08em;
+      border-radius: var(--radius-pill);
+      font-size: 0.68rem;
+      border: 1px solid var(--border-soft);
+      background: rgba(8, 22, 43, 0.9);
+      color: var(--text-dim);
+    }
+
+    .chip-dot-ok,
+    .chip-dot-warn,
+    .chip-dot-bad {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+    }
+
+    .chip-dot-ok {
+      background: var(--ok);
+      box-shadow: 0 0 10px rgba(74, 222, 128, 0.8);
+    }
+    .chip-dot-warn {
+      background: var(--warning);
+      box-shadow: 0 0 10px rgba(250, 204, 21, 0.8);
+    }
+    .chip-dot-bad {
+      background: var(--danger);
+      box-shadow: 0 0 10px rgba(239, 68, 68, 0.8);
+    }
+
+    /* Main cards */
+
+    .section-title {
+      margin: 18px 4px 6px;
+      font-size: 0.82rem;
+      font-weight: 600;
       text-transform: uppercase;
-      color: #acffe4;
-      margin-bottom: 10px;
-    }
-
-    .badge-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 999px;
-      background: #04ffab;
-      box-shadow: 0 0 10px rgba(4, 255, 171, 0.9);
-    }
-
-    h1 {
-      font-size: 22px;
-      line-height: 1.2;
-      margin-bottom: 6px;
-    }
-
-    .subtitle {
-      font-size: 13px;
+      letter-spacing: 0.08em;
       color: var(--text-dim);
-      margin-bottom: 14px;
     }
 
-    .highlight {
-      color: var(--accent);
-      font-weight: 600;
-    }
-
-    .card {
-      margin-top: 12px;
-      padding: 12px 11px;
-      border-radius: 18px;
-      background: rgba(3, 10, 35, 0.92);
-      border: 1px solid rgba(59, 213, 255, 0.25);
-    }
-
-    .card-title {
-      font-size: 13px;
-      font-weight: 600;
-      margin-bottom: 6px;
-    }
-
-    .card-text {
-      font-size: 12px;
-      color: var(--text-dim);
-      line-height: 1.5;
-    }
-
-    .actions {
+    .card-grid {
       display: flex;
       flex-direction: column;
       gap: 10px;
-      margin-top: 16px;
     }
 
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      width: 100%;
-      border-radius: 999px;
-      padding: 11px 14px;
-      border: 1px solid transparent;
-      font-size: 13px;
-      font-weight: 600;
-      letter-spacing: 0.02em;
-      text-decoration: none;
-      color: var(--text-main);
-      background: var(--accent-soft);
-      backdrop-filter: blur(10px);
-    }
-
-    .btn-primary {
-      background: linear-gradient(135deg, #3bd5ff, #a363ff);
-      border-color: rgba(255, 255, 255, 0.35);
-      box-shadow: 0 8px 20px rgba(12, 176, 255, 0.55);
-    }
-
-    .btn-secondary {
-      background: rgba(3, 15, 50, 0.9);
-      border-color: rgba(94, 113, 255, 0.6);
-    }
-
-    .btn-icon {
-      width: 18px;
-      height: 18px;
-      border-radius: 999px;
-      border: 1px solid rgba(9, 255, 196, 0.9);
+    .card {
+      padding: 12px 14px;
+      border-radius: var(--radius-lg);
+      background: var(--card-bg);
+      border: 1px solid rgba(78, 96, 132, 0.55);
+      box-shadow: var(--shadow-soft);
       display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 11px;
-      color: #04ffab;
+      flex-direction: column;
+      gap: 8px;
     }
 
-    .status {
-      margin-top: 12px;
-      font-size: 11px;
-      color: var(--text-dim);
+    .card-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 8px;
     }
 
-    .status-pill {
-      padding: 3px 9px;
-      border-radius: 999px;
-      font-size: 10px;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      border: 1px solid rgba(59, 213, 255, 0.4);
-      color: #9fe4ff;
+    .card-title {
+      font-size: 0.9rem;
+      font-weight: 600;
     }
 
-    .status-pill--ok {
-      border-color: rgba(4, 255, 171, 0.6);
-      color: #adffd8;
-    }
-
-    .footer {
-      margin-top: 10px;
-      font-size: 10px;
+    .card-subtitle {
+      font-size: 0.75rem;
       color: var(--text-dim);
-      opacity: 0.8;
     }
 
-    .footer span {
+    .pill {
+      font-size: 0.68rem;
+      padding: 3px 9px;
+      border-radius: var(--radius-pill);
+      background: rgba(59, 213, 255, 0.15);
+      border: 1px solid rgba(59, 213, 255, 0.55);
       color: var(--accent);
-      font-weight: 500;
+      white-space: nowrap;
     }
 
-    #
+    .btn-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 2px;
+    }
+
+    .btn {
+      flex: 1;
+      min-width: 0;
+      border-radius: var(--radius-pill);
+      padding: 8px 10px;
+      border: none;
+      font-size: 0.8rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      color: var(--text-main);
+      background: linear-gradient(135deg, #1b3c6b, #102749);
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.45);
+    }
+
+    .btn-secondary {
+      background: rgba(4, 17, 35, 0.95);
+      border: 1px solid rgba(115, 136, 177, 0.7);
+      box-shadow: none;
+      color: var(--text-dim);
+    }
+
+    .btn-ghost {
+      flex: 0;
+      padding-inline: 12px;
+      font-size: 0.76rem;
+      background: transparent;
+      border-radius: var(--radius-pill);
+      border: 1px solid rgba(104, 131, 186, 0.7);
+      color: var(--text-dim);
+      box-shadow: none;
+    }
+
+    .btn span.icon {
+      font-size: 1rem;
+      line-height: 1;
+    }
+
+    /* Library list */
+
+    .app-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .app-card {
+      padding: 10px 12px;
+      border-radius: var(--radius-md);
+      background: var(--card-bg-soft);
+      border: 1px solid rgba(93, 118, 163, 0.7);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .app-main-line {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .app-name {
+      font-size: 0.84rem;
+      font-weight: 550;
+    }
+
+    .app-url {
+      font-size: 0.72rem;
+      color: var(--text-dim);
+      word-break: break-all;
+    }
+
+    .status-pill {
+      font-size: 0.7rem;
+      padding: 3px 8px;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--border-soft);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text-dim);
+      background: rgba(7, 19, 38, 0.9);
+    }
+
+    .status-pill span.dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+    }
+
+    .status-installed {
+      border-color: rgba(74, 222, 128, 0.8);
+      color: var(--ok);
+    }
+
+    .status-installed span.dot {
+      background: var(--ok);
+    }
+
+    .status-ready {
+      border-color: rgba(59, 213, 255, 0.8);
+      color: var(--accent-strong);
+    }
+
+    .status-ready span.dot {
+      background: var(--accent-strong);
+    }
+
+    .status-notready {
+      border-color: rgba(248, 113, 113, 0.8);
+      color: var(--danger);
+    }
+
+    .status-notready span.dot {
+      background: var(--danger);
+    }
+
+    .app-actions {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .app-actions button {
+      flex: 1;
+      min-width: 0;
+      font-size: 0.76rem;
+      padding-block: 6px;
+    }
+
+    /* Diagnostics */
+
+    .diag-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .diag-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.78rem;
+      padding: 8px 10px;
+      border-radius: var(--radius-md);
+      background: rgba(8, 21, 42, 0.95);
+      border: 1px solid rgba(93, 118, 163, 0.7);
+    }
+
+    .diag-left {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .diag-label {
+      color: var(--text-dim);
+      font-size: 0.72rem;
+    }
+
+    .diag-value-ok {
+      color: var(--ok);
+    }
+
+    .diag-value-warn {
+      color: var(--warning);
+    }
+
+    .diag-value-bad {
+      color: var(--danger);
+    }
+
+    .diag-tag {
+      font-size: 0.68rem;
+      padding: 2px 6px;
+      border-radius: var(--radius-pill);
+      background: rgba(16, 41, 80, 0.9);
+      color: var(--text-dim);
+      border: 1px solid rgba(93, 118, 163, 0.7);
+    }
+
+    .logs {
+      margin-top: 8px;
+      font-size: 0.72rem;
+      color: var(--text-dim);
+      padding: 8px 10px;
+      border-radius: var(--radius-md);
+      background: rgba(6, 18, 34, 0.95);
+      border: 1px dashed rgba(120, 140, 186, 0.7);
+      max-height: 160px;
+      overflow-y: auto;
+    }
+
+    .log-line {
+      margin-bottom: 4px;
+      opacity: 0.95;
+    }
+
+    .log-line span.time {
+      color: rgba(150, 167, 210, 0.86);
+      font-size: 0.7rem;
+      margin-right: 4px;
+    }
+
+    /* Help */
+
+    .help-text {
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      line-height: 1.4;
+    }
+
+    .help-list {
+      margin: 6px 0 0;
+      padding-left: 18px;
+      font-size: 0.78rem;
+      color: var(--text-dim);
+    }
+
+    .help-list li {
+      margin-bottom: 4px;
+    }
+
+    /* Navigation bar bottom */
+
+    .bottom-nav {
+      position: fixed;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: 14px;
+      width: min(480px, 100% - 24px);
+      z-index: 20;
+    }
+
+    .bottom-nav-inner {
+      background: rgba(5, 13, 26, 0.96);
+      border-radius: var(--radius-pill);
+      border: 1px solid rgba(104, 131, 186, 0.85);
+      box-shadow: 0 22px 40px rgba(0, 0, 0, 0.85);
+      display: flex;
+      justify-content: space-around;
+      padding: 6px 6px;
+    }
+
+    .nav-btn {
+      flex: 1;
+      border-radius: var(--radius-pill);
+      border: none;
+      background: transparent;
+      color: var(--text-dim);
+      font-size: 0.72rem;
+      padding: 6px 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      cursor: pointer;
+    }
+
+    .nav-btn span.icon {
+      font-size: 1rem;
+    }
+
+    .nav-btn-active {
+      background: radial-gradient(circle at top, rgba(59, 213, 255, 0.3), rgba(15, 35, 75, 0.9));
+      color: var(--accent-strong);
+      box-shadow: 0 0 0 1px rgba(59, 213, 255, 0.8), 0 10px 22px rgba(0, 0, 0, 0.9);
+    }
+
+    /* Views */
+
+    .view {
+      display: none;
+      margin-top: 12px;
+    }
+
+    .view-active {
+      display: block;
+    }
+
+    @media (min-width: 768px) {
+      .app-shell {
+        padding-top: 24px;
+      }
+      header.app-header {
+        padding: 18px 20px;
+      }
+      .card {
+        padding: 14px 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="glow-orbit" aria-hidden="true"></div>
+
+  <div class="app-shell">
+    <header class="app-header">
+      <div class="title-row">
+        <div>
+          <div class="title-main">Radiant Deploy v2 – Master Prototype Engine</div>
+          <div class="subtitle">
+            Lucas te ayuda a probar e instalar tus <strong>Radiant Master Apps</strong> como PWA.
+          </div>
+        </div>
+        <div class="badge-beta">Installer Lab</div>
+      </div>
+
+      <div class="crumbs">
+        <span>Home</span>
+        <div class="crumb-dot"></div>
+        <span>Library</span>
+        <div class="crumb-dot"></div>
+        <span>Diagnostics</span>
+        <div class="crumb-dot"></div>
+        <span>Help</span>
+      </div>
+
+      <div id="statusBar" class="status-bar">
+        <!-- chips generados por JS -->
+      </div>
+    </header>
+
+    <!-- HOME VIEW -->
+    <main id="view-home" class="view view-active">
+      <div class="section-title">Installer Hub</div>
+      <div class="card-grid">
+        <section class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Radiant Master Apps Library</div>
+              <div class="card-subtitle">
+                Lista de prototipos listos para probar o instalar en tu teléfono.
+              </div>
+            </div>
+            <span class="pill">Warp-Ready</span>
+          </div>
+          <div class="btn-row">
+            <button class="btn" data-action="go-library">
+              <span class="icon">📚</span>
+              <span>Abrir Library</span>
+            </button>
+            <button class="btn btn-secondary" data-action="go-diagnostics">
+              <span class="icon">🧪</span>
+              <span>Diagnostics</span>
+            </button>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Quick Install</div>
+              <div class="card-subtitle">
+                Pega una URL de otro prototipo (Netlify, Vercel, etc.) y ejecútalo rápido.
+              </div>
+            </div>
+            <span class="pill">Sandbox</span>
+          </div>
+          <div class="btn-row">
+            <button class="btn" data-action="quick-install">
+              <span class="icon">⚡</span>
+              <span>Pegar URL y abrir</span>
+            </button>
+            <button class="btn btn-secondary" data-action="go-help">
+              <span class="icon">❔</span>
+              <span>¿Cómo instalo?</span>
+            </button>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <!-- LIBRARY VIEW -->
+    <section id="view-library" class="view">
+      <div class="section-title">Radiant Library</div>
+      <div id="libraryList" class="app-list">
+        <!-- tarjetas generadas por JS -->
+      </div>
+
+      <div style="margin-top:10px; font-size:0.74rem; color:var(--text-dim);">
+        Tip: el estado <strong>Installed</strong> se guarda solo en este teléfono (localStorage).
+      </div>
+    </section>
+
+    <!-- DIAGNOSTICS VIEW -->
+    <section id="view-diagnostics" class="view">
+      <div class="section-title">Diagnostics & Logs</div>
+
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Radiant Deploy v2 – Self-Check</div>
+            <div class="card-subtitle">Estado PWA del propio installer.</div>
+          </div>
+          <button class="btn-ghost" data-action="run-selfcheck">Re-scan</button>
+        </div>
+
+        <div id="diagList" class="diag-list">
+          <!-- items generados -->
+        </div>
+
+        <div id="logBox" class="logs">
+          <!-- logs -->
+        </div>
+      </div>
+    </section>
+
+    <!-- HELP VIEW -->
+    <section id="view-help" class="view">
+      <div class="section-title">Lucas – Quick Guide</div>
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Bienvenido a Radiant Deploy v2</div>
+            <div class="card-subtitle">
+              “You can tell me verbally or type it — I’ll fill it in for you.”
+            </div>
+          </div>
+        </div>
+
+        <div class="help-text">
+          Este installer está diseñado para que, desde tu teléfono, puedas:
+          <ul class="help-list">
+            <li>Ver tus <strong>Radiant Master Apps</strong> en la Library.</li>
+            <li>Probar cada app con <em>Test</em> (se abre en sandbox).</li>
+            <li>Seguir el flujo <strong>Install</strong> para añadir el icono a tu pantalla de inicio.</li>
+          </ul>
+          <p style="margin-top:8px;">
+            <strong>Pasos para instalar un app como PWA:</strong>
+          </p>
+          <ol class="help-list" style="margin-top:4px;">
+            <li>En la Library, pulsa <strong>Install</strong> en el app que quieras.</li>
+            <li>Se abrirá el navegador. Toca el menú <strong>⋮</strong> (arriba a la derecha).</li>
+            <li>Elige <strong>“Add to Home screen” / “Añadir a pantalla de inicio”</strong>.</li>
+            <li>Confirma el nombre y acepta. El icono aparecerá como app independiente.</li>
+          </ol>
+          <p style="margin-top:8px;">
+            Todo el estado se guarda <strong>solo en tu dispositivo</strong>. No se envían datos sensibles.
+          </p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Bottom navigation -->
+  <nav class="bottom-nav" aria-label="Main navigation">
+    <div class="bottom-nav-inner">
+      <button class="nav-btn nav-btn-active" data-view="home">
+        <span class="icon">🏠</span>
+        <span>Home</span>
+      </button>
+      <button class="nav-btn" data-view="library">
+        <span class="icon">📚</span>
+        <span>Library</span>
+      </button>
+      <button class="nav-btn" data-view="diagnostics">
+        <span class="icon">🧪</span>
+        <span>Diag</span>
+      </button>
+      <button class="nav-btn" data-view="help">
+        <span class="icon">❔</span>
+        <span>Help</span>
+      </button>
+    </div>
+  </nav>
+
+  <script>
+    // ---------- STATE BÁSICO ----------
+    const STORAGE_KEY = "radiantDeployV2State";
+
+    /**
+     * EDITABLE POR ALVIN:
+     * Aquí defines los Master Apps que quieres ver en la Library.
+     * Cambia las URLs cuando tengas tus prototipos.
+     */
+    const APPS = [
+      {
+        id: "radiant-health-demo-1",
+        name: "Radiant Health – Demo 1 v2.1",
+        url: "https://tu-url-de-radiant-health-aqui.com",
+        status: "installed" // "installed" | "ready" | "not-ready"
+      },
+      {
+        id: "l-life-master",
+        name: "L-Life – Master App",
+        url: "https://tu-url-de-l-life-aqui.com",
+        status: "ready"
+      }
+    ];
+
+    const defaultState = {
+      appsStatus: {}, // id -> status override (installed/ready/not-ready)
+      logs: []
+    };
+
+    let state = loadState();
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return structuredClone(defaultState);
+        const parsed = JSON.parse(raw);
+        return Object.assign(structuredClone(defaultState), parsed);
+      } catch (e) {
+        console.warn("Error loading state", e);
+        return structuredClone(defaultState);
+      }
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      } catch (e) {
+        console.warn("Error saving state", e);
+      }
+    }
+
+    function addLog(message) {
+      const now = new Date();
+      const time = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      state.logs.unshift({ time, message });
+      // limite de 40 líneas
+      state.logs = state.logs.slice(0, 40);
+      saveState();
+      renderLogs();
+    }
+
+    // ---------- VIEW MANAGEMENT ----------
+    const views = ["home", "library", "diagnostics", "help"];
+
+    function renderView(name) {
+      views.forEach(v => {
+        const el = document.getElementById(`view-${v}`);
+        if (!el) return;
+        el.classList.toggle("view-active", v === name);
+      });
+
+      document
+        .querySelectorAll(".nav-btn")
+        .forEach(btn => {
+          btn.classList.toggle(
+            "nav-btn-active",
+            btn.dataset.view === name
+          );
+        });
+
+      // ajustes ligeros por vista
+      if (name === "library") {
+        renderLibrary();
+      } else if (name === "diagnostics") {
+        runSelfCheck(false);
+      }
+    }
+
+    // ---------- STATUS BAR ----------
+    function renderStatusBar() {
+      const bar = document.getElementById
